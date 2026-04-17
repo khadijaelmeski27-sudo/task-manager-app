@@ -1,84 +1,64 @@
-let tasks = [];
+// ===== Task Manager App (Enhanced Version) =====
 
-// تحميل المهام من localStorage عند بداية الموقع
-window.onload = function() {
-  const savedTasks = localStorage.getItem("tasks");
+let tasks = []; let currentFilter = "all";
 
-  if (savedTasks) {
-    tasks = JSON.parse(savedTasks);
-    tasks.forEach(task => createTaskElement(task.text, task.done));
-  }
-};
+const taskInput = document.getElementById("taskInput"); const addBtn = document.getElementById("addBtn"); const taskList = document.getElementById("taskList");
 
-const addBtn = document.getElementById("addBtn");
+const totalCount = document.getElementById("totalCount"); const doneCount = document.getElementById("doneCount"); const pendingCount = document.getElementById("pendingCount"); const deleteAllBtn = document.getElementById("deleteAllBtn"); const filterButtons = document.querySelectorAll("[data-filter]");
 
-addBtn.addEventListener("click", function() {
-  const input = document.getElementById("taskInput");
-  const taskText = input.value;
+// ===== Load ===== window.addEventListener("load", () => { const savedTasks = localStorage.getItem("tasks");
 
-  if (taskText === "") return;
+if (savedTasks) { tasks = JSON.parse(savedTasks); }
 
-  const task = {
-    text: taskText,
-    done: false
-  };
+renderTasks(); });
 
-  tasks.push(task);
+// ===== Add ===== addBtn.addEventListener("click", addTask);
+
+if (taskInput) { taskInput.addEventListener("keypress", (e) => { if (e.key === "Enter") addTask(); }); }
+
+function addTask() { const text = taskInput.value.trim(); if (!text) return;
+
+const task = { id: Date.now(), text, done: false };
+
+tasks.push(task); taskInput.value = "";
+
+saveTasks(); renderTasks(); }
+
+// ===== Render ===== function renderTasks() { taskList.innerHTML = "";
+
+const filtered = tasks.filter(task => { if (currentFilter === "done") return task.done; if (currentFilter === "pending") return !task.done; return true; });
+
+filtered.forEach(task => { const li = document.createElement("li"); li.textContent = task.text; li.className = task.done ? "done" : "";
+
+li.addEventListener("click", () => {
+  task.done = !task.done;
   saveTasks();
-
-  createTaskElement(task.text, task.done);
-
-  input.value = "";
+  renderTasks();
 });
 
-// function باش نصاوب task
-function createTaskElement(text, done) {
-  const li = document.createElement("li");
-  li.textContent = text;
+const deleteBtn = document.createElement("button");
+deleteBtn.textContent = "X";
 
-  if (done) {
-    li.classList.add("done");
-  }
-
-  li.addEventListener("click", function() {
-    li.classList.toggle("done");
-
-    updateTask(text, li.classList.contains("done"));
-  });
-
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "X";
-
-  deleteBtn.addEventListener("click", function() {
-    li.remove();
-
-    tasks = tasks.filter(task => task.text !== text);
-    saveTasks();
-  });
-
-  li.appendChild(deleteBtn);
-
-  document.getElementById("taskList").appendChild(li);
-}
-
-// حفظ المهام
-function saveTasks() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-}
-
-// تحديث الحالة (done)
-function updateTask(text, done) {
-  tasks = tasks.map(task => {
-    if (task.text === text) {
-      return { text, done };
-    }
-    return task;
-  });
-
+deleteBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  tasks = tasks.filter(t => t.id !== task.id);
   saveTasks();
-document.getElementById("taskInput").addEventListener("keypress", function(e) {
-  if (e.key === "Enter") {
-    document.getElementById("addBtn").click();
-  }
+  renderTasks();
 });
-}
+
+li.appendChild(deleteBtn);
+taskList.appendChild(li);
+
+});
+
+updateStats(); }
+
+// ===== Stats ===== function updateStats() { const total = tasks.length; const done = tasks.filter(t => t.done).length; const pending = total - done;
+
+if (totalCount) totalCount.textContent = total; if (doneCount) doneCount.textContent = done; if (pendingCount) pendingCount.textContent = pending; }
+
+// ===== Save ===== function saveTasks() { localStorage.setItem("tasks", JSON.stringify(tasks)); }
+
+// ===== Delete All ===== if (deleteAllBtn) { deleteAllBtn.addEventListener("click", () => { tasks = []; saveTasks(); renderTasks(); }); }
+
+// ===== Filters ===== filterButtons.forEach(btn => { btn.addEventListener("click", () => { currentFilter = btn.dataset.filter; renderTasks(); }); });
