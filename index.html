@@ -1,3 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Task Manager App</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .input-section {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+    }
+
+    button {
+      padding: 10px;
+      cursor: pointer;
+      background: #4a6cf7;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      background: #eee;
+      margin-bottom: 8px;
+      border-radius: 5px;
+    }
+
+    li.done {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .delete {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
 <div class="container">
   <h1>Task Manager</h1>
 
@@ -8,3 +92,84 @@
 
   <ul id="taskList"></ul>
 </div>
+
+<script>
+let tasks = [];
+
+const taskInput = document.getElementById("taskInput");
+const addBtn = document.getElementById("addBtn");
+const taskList = document.getElementById("taskList");
+
+// Load from localStorage
+window.addEventListener("load", () => {
+  const saved = localStorage.getItem("tasks");
+  if (saved) tasks = JSON.parse(saved);
+  renderTasks();
+});
+
+// Add task
+addBtn.addEventListener("click", addTask);
+
+taskInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") addTask();
+});
+
+function addTask() {
+  const text = taskInput.value.trim();
+  if (!text) return;
+
+  const task = {
+    id: Date.now(),
+    text,
+    done: false
+  };
+
+  tasks.push(task);
+  taskInput.value = "";
+
+  saveTasks();
+  renderTasks();
+}
+
+// Render
+function renderTasks() {
+  taskList.innerHTML = "";
+
+  tasks.forEach(task => {
+    const li = document.createElement("li");
+
+    li.textContent = task.text;
+    if (task.done) li.classList.add("done");
+
+    // toggle done
+    li.addEventListener("click", () => {
+      task.done = !task.done;
+      saveTasks();
+      renderTasks();
+    });
+
+    // delete button
+    const del = document.createElement("button");
+    del.textContent = "X";
+    del.classList.add("delete");
+
+    del.addEventListener("click", (e) => {
+      e.stopPropagation();
+      tasks = tasks.filter(t => t.id !== task.id);
+      saveTasks();
+      renderTasks();
+    });
+
+    li.appendChild(del);
+    taskList.appendChild(li);
+  });
+}
+
+// Save
+function saveTasks() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+</script>
+
+</body>
+</html>
